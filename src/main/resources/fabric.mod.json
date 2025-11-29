@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "camerafix",
+  "version": "${version}",
+  "name": "CameraFix",
+  "description": "",
+  "authors": [
+    "KleeLoveLife&Dg32z_"
+  ],
+  "contact": {
+    "repo": "https://github.com/"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "mixins": [
+    "camerafix.mixins.json"
+  ],
+  "entrypoints": {
+    "main": [
+      "cn.chaosmp.camerafix.Main"
+    ]
+  }
+}
