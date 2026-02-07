@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "camerafix",
+  "version": "${version}",
+  "name": "CameraFix",
+  "description": "",
+  "authors": [
+    "CHAOS-SMP"
+  ],
+  "contact": {
+    "repo": "https://github.com/CHAOS-SMP/CameraFix"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "mixins": [
+    "camerafix.mixins.json"
+  ],
+  "entrypoints": {
+    "main": [
+      "cn.chaosmp.camerafix.Main"
+    ]
+  }
+}
