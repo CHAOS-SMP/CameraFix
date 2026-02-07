@@ -4,9 +4,10 @@
   "package": "cn.chaosmp.camerafix.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "cn.chaosmp.camerafix.mixins.brigde.ServerboundMovePlayerPacketBridge",
-    "cn.chaosmp.camerafix.mixins.MixinServerboundMovePlayerPosRotPacket",
-    "cn.chaosmp.camerafix.mixins.MixinServerboundMovePlayerRotPacket"
+    "MixinConnection",
+    "MixinServerboundMovePlayerPosRotPacket",
+    "MixinServerboundMovePlayerRotPacket",
+    "brigde.ServerboundMovePlayerPacketBridge"
   ],
   "injectors": {
     "defaultRequire": 1
