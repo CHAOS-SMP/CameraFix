@@ -9,7 +9,6 @@ import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import net.minecraft.world.InteractionHand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +28,9 @@ public abstract class MixinPacketListener {
         if (!Main.shouldUseProtocol()) {
             return;
         }
+        float yaw = ProtocolPackets.YAW;
+        float pitch = ProtocolPackets.PITCH;
+
         if (packet instanceof ServerboundMovePlayerPacket) {
             if (((ServerboundMovePlayerPacket) packet).hasRotation()) {
                 ProtocolPackets.YAW = (((ServerboundMovePlayerPacket) packet).getYRot(Float.NaN));
@@ -43,19 +45,16 @@ public abstract class MixinPacketListener {
         if (packet instanceof ServerboundPlayerInputPacket e) {
             ProtocolPackets.SNEAK = e.input().shift();
         }
+        boolean shouldRewrite = !Float.isNaN(yaw) && !Float.isNaN(pitch);
         if (packet instanceof ServerboundUseItemOnPacket e) {
-            float yaw = ProtocolPackets.YAW;
-            float pitch = ProtocolPackets.PITCH;
-            if (!Float.isNaN(yaw) && !Float.isNaN(pitch)) {
-                send(ProtocolPackets.sendPlacePayload(e.getHitResult(), e.getHand() == InteractionHand.MAIN_HAND, e.getSequence(), System.currentTimeMillis(), yaw, pitch, ProtocolPackets.SNEAK));
+            if (shouldRewrite) {
+                send(ProtocolPackets.wrapAsPlacementPayload(e));
                 ci.cancel();
             }
         }
         if (packet instanceof ServerboundUseItemPacket e) {
-            float yaw = ProtocolPackets.YAW;
-            float pitch = ProtocolPackets.PITCH;
-            if (!Float.isNaN(yaw) && !Float.isNaN(pitch)) {
-                send(new ServerboundCustomPayloadPacket(new ProtocolPackets.InteractPayload(e, yaw, pitch, ProtocolPackets.SNEAK)));
+            if (shouldRewrite) {
+                send(ProtocolPackets.wrapAsInteractPayload(e));
                 ci.cancel();
             }
         }
