@@ -1,7 +1,8 @@
 package cn.chaosmp.camerafix.mixins;
 
+import cn.chaosmp.camerafix.Main;
 import cn.chaosmp.camerafix.mixins.brigde.ServerboundMovePlayerPacketBridge;
-import cn.chaosmp.camerafix.util.PacketFlagUtil;
+import cn.chaosmp.camerafix.util.Insecure;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -23,6 +24,9 @@ public class MixinServerboundMovePlayerPosRotPacket {
             cancellable = true
     )
     private void write(FriendlyByteBuf friendlyByteBuf, CallbackInfo ci) {
+        if (!Main.shouldUseProtocol()) {
+            return;
+        }
         ServerboundMovePlayerPacketBridge bridge = (ServerboundMovePlayerPacketBridge) this;
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 
@@ -35,17 +39,17 @@ public class MixinServerboundMovePlayerPosRotPacket {
         friendlyByteBuf.writeFloat(camera.getYRot());
         friendlyByteBuf.writeFloat(camera.getXRot());
 
-        if (PacketFlagUtil.hasHorizontalCollision()) {
+        if (Insecure.hasHorizontalCollision()) {
             try {
-                friendlyByteBuf.writeByte(PacketFlagUtil.ServerboundMovePlayerRotPacket$1_21_R2$packFlags(
+                friendlyByteBuf.writeByte(Insecure.packFlags0(
                         bridge.onGround(),
-                        (boolean) PacketFlagUtil.ServerboundMovePlayerPacket$field$HorizontalCollision.get(this)
+                        (boolean) Insecure.HORIZONAL_COLLISION.get(this)
                 ));
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         } else
-            friendlyByteBuf.writeByte(PacketFlagUtil.ServerboundMovePlayerRotPacket$1_21_R1$packFlags(bridge.onGround()));
+            friendlyByteBuf.writeByte(Insecure.packFlags(bridge.onGround()));
 
         ci.cancel();
     }
