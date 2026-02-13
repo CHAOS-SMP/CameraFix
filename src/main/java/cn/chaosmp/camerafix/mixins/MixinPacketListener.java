@@ -50,6 +50,7 @@ public abstract class MixinPacketListener {
             if (shouldRewrite) {
                 send(ProtocolPackets.wrapAsPlacementPayload(e));
                 ci.cancel();
+                return;
             }
         }
         if (packet instanceof ServerboundUseItemPacket e) {
