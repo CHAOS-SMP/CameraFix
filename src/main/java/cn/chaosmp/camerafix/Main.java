@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Main implements ModInitializer {
     public static final AtomicBoolean SENT_POS_SYNC = new AtomicBoolean(true);
     public static boolean ENABLE_HOOK = true;
-
     public static boolean shouldUseProtocol() {
         return ENABLE_HOOK && !Minecraft.getInstance().isSingleplayer();
     }

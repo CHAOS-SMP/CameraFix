@@ -5,6 +5,7 @@ import cn.chaosmp.camerafix.mixins.brigde.ServerboundMovePlayerPacketBridge;
 import cn.chaosmp.camerafix.util.Insecure;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,16 +29,18 @@ public class MixinServerboundMovePlayerRotPacket {
             return;
         }
         ServerboundMovePlayerPacketBridge bridge = (ServerboundMovePlayerPacketBridge) this;
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-
-        if (Math.abs(bridge.getYRot() - camera.getYRot()) <= 0.1f &&
-                Math.abs(bridge.getXRot() - camera.getXRot()) <= 0.1f
+        LocalPlayer player = Minecraft.getInstance().player;
+        if(player == null){
+            return;
+        }
+        if (Math.abs(bridge.getYRot() - player.getYRot()) <= 0.1f &&
+                Math.abs(bridge.getXRot() - player.getXRot()) <= 0.1f
         ) {
             return;
         }
 
-        friendlyByteBuf.writeFloat(camera.getYRot());
-        friendlyByteBuf.writeFloat(camera.getXRot());
+        friendlyByteBuf.writeFloat(player.getYRot());
+        friendlyByteBuf.writeFloat(player.getXRot());
 
         if (Insecure.hasHorizontalCollision()) {
             try {
