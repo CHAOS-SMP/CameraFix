@@ -43,7 +43,7 @@ public abstract class MixinPacketListener {
             }
         }
         if (packet instanceof ServerboundPlayerInputPacket e) {
-            ProtocolPackets.SNEAK = e.input().shift();
+            ProtocolPackets.SNEAK = e.isShiftKeyDown();
         }
         boolean shouldRewrite = !Float.isNaN(yaw) && !Float.isNaN(pitch);
         if (packet instanceof ServerboundUseItemOnPacket e) {
