@@ -1,40 +1,33 @@
 plugins {
-    id 'fabric-loom' version '1.12-SNAPSHOT'
+    id 'base'
 }
 
-group = "cn.chaos-smp"
-version = "1.1.1-1.21.11-1.21.4"
+group = providers.gradleProperty('maven_group').get()
+version = providers.gradleProperty('mod_version').get()
 
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-}
-
-processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
-    filteringCharset "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+allprojects {
+    repositories {
+        maven { url = uri('https://maven.fabricmc.net/') }
+        maven { url = uri('https://maven.minecraftforge.net/') }
+        maven { url = uri('https://maven.neoforged.net/releases') }
+        maven { url = uri('https://repo.spongepowered.org/maven') }
+        maven {
+            url = uri('http://110.42.99.246:8080/releases')
+            allowInsecureProtocol = true
+        }
+        maven { url = uri('https://mirrors.cloud.tencent.com/nexus/repository/maven-public/') }
+        mavenCentral()
     }
 }
-def targetJavaVersion = 17
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    it.options.release.set(targetJavaVersion)
+
+tasks.named('build') {
+    dependsOn subprojects.collect { "${it.path}:build" }
 }
 
-java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-    withSourcesJar()
+tasks.named('assemble') {
+    dependsOn subprojects.collect { "${it.path}:assemble" }
+}
+
+tasks.named('clean') {
+    dependsOn subprojects.collect { "${it.path}:clean" }
 }

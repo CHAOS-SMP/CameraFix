@@ -1,59 +1,61 @@
 package cn.chaosmp.camerafix.mixins;
 
 import cn.chaosmp.camerafix.Main;
-import cn.chaosmp.camerafix.mixins.brigde.ServerboundMovePlayerPacketBridge;
-import cn.chaosmp.camerafix.util.Insecure;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import cn.chaosmp.camerafix.util.ProtocolPackets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerboundMovePlayerPacket.Rot.class)
 public class MixinServerboundMovePlayerRotPacket {
-    @Inject(
+    @ModifyArg(
             method = "write",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/network/FriendlyByteBuf;writeFloat(F)Lnet/minecraft/network/FriendlyByteBuf;",
                     ordinal = 0
             ),
-            cancellable = true
+            index = 0
     )
-    private void write(FriendlyByteBuf friendlyByteBuf, CallbackInfo ci) {
+    private float writeYaw(float original) {
+        return rewriteRotation(original, true);
+    }
+
+    @ModifyArg(
+            method = "write",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/network/FriendlyByteBuf;writeFloat(F)Lnet/minecraft/network/FriendlyByteBuf;",
+                    ordinal = 1
+            ),
+            index = 0
+    )
+    private float writePitch(float original) {
+        return rewriteRotation(original, false);
+    }
+
+    @Inject(method = "write", at = @At("RETURN"))
+    private void clearMoveRotation(FriendlyByteBuf buf, CallbackInfo ci) {
+        ProtocolPackets.clearMoveRotation((ServerboundMovePlayerPacket) (Object) this);
+    }
+
+    private float rewriteRotation(float original, boolean yaw) {
         if (!Main.shouldUseProtocol()) {
-            return;
+            return original;
         }
-        ServerboundMovePlayerPacketBridge bridge = (ServerboundMovePlayerPacketBridge) this;
-        LocalPlayer player = Minecraft.getInstance().player;
-        if(player == null){
-            return;
+        ServerboundMovePlayerPacket bridge = (ServerboundMovePlayerPacket) (Object) this;
+        ProtocolPackets.MoveRotation rotation = ProtocolPackets.getMoveRotation(bridge);
+        if (rotation == null) {
+            return original;
         }
-        if (Math.abs(bridge.getYRot() - player.getYRot()) <= 0.1f &&
-                Math.abs(bridge.getXRot() - player.getXRot()) <= 0.1f
-        ) {
-            return;
+        float replacement = yaw ? rotation.yaw() : rotation.pitch();
+        if (Float.isNaN(replacement) || Math.abs(original - replacement) <= 0.1f) {
+            return original;
         }
-
-        friendlyByteBuf.writeFloat(player.getYRot());
-        friendlyByteBuf.writeFloat(player.getXRot());
-
-        if (Insecure.hasHorizontalCollision()) {
-            try {
-                friendlyByteBuf.writeByte(Insecure.packFlags0(
-                        bridge.onGround(),
-                        (boolean) Insecure.HORIZONAL_COLLISION.get(this)
-                ));
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            friendlyByteBuf.writeByte(Insecure.packFlags(bridge.onGround()));
-
-        ci.cancel();
+        return replacement;
     }
 }

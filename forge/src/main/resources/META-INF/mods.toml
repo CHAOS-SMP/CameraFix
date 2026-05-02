@@ -1,0 +1,28 @@
+﻿modLoader="javafml"
+loaderVersion="[52,)"
+license="MIT"
+
+[[mods]]
+modId="${mod_id}"
+version="${version}"
+displayName="${mod_name}"
+authors="CHAOS-SMP"
+description='''Corrects head-rotation changes made at the data packet level into actual camera rotations,
+resolving compatibility issues with anti-cheat systems that enforce strict movement validation.'''
+
+[[mixins]]
+config="camerafix.mixins.json"
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+type="required"
+versionRange="[${minecraft_version},)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.${mod_id}]]
+modId="forge"
+type="required"
+versionRange="[${forge_version},)"
+ordering="NONE"
+side="CLIENT"
