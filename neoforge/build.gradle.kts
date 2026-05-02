@@ -1,5 +1,4 @@
-﻿import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.language.jvm.tasks.ProcessResources
 
 plugins {
@@ -13,7 +12,6 @@ val modId = providers.gradleProperty("mod_id").get()
 val modName = providers.gradleProperty("mod_name").get()
 val artifactVersion = providers.gradleProperty("artifact_version").get()
 val mixinVersion = providers.gradleProperty("mixin_version").get()
-val targetJavaVersion = providers.gradleProperty("target_java_version").get().toInt()
 
 dependencies {
     compileOnly("org.spongepowered:mixin:$mixinVersion")
@@ -35,11 +33,6 @@ neoForge {
             sourceSet(sourceSets["main"])
         }
     }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    options.release.set(targetJavaVersion)
 }
 
 tasks.named<ProcessResources>("processResources") {

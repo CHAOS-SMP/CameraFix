@@ -1,7 +1,6 @@
-﻿import net.minecraftforge.gradle.userdev.UserDevExtension
+import net.minecraftforge.gradle.userdev.UserDevExtension
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.kotlin.dsl.getByType
 import org.spongepowered.asm.gradle.plugins.MixinExtension
@@ -18,7 +17,6 @@ val modId = providers.gradleProperty("mod_id").get()
 val modName = providers.gradleProperty("mod_name").get()
 val artifactVersion = providers.gradleProperty("artifact_version").get()
 val mixinVersion = providers.gradleProperty("mixin_version").get()
-val targetJavaVersion = providers.gradleProperty("target_java_version").get().toInt()
 val includedDependencies by configurations.creating
 val sourceSets = extensions.getByType<SourceSetContainer>()
 
@@ -47,11 +45,6 @@ configure<UserDevExtension> {
 
 configure<MixinExtension> {
     add(sourceSets["main"], "$modId.refmap.json")
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    options.release.set(targetJavaVersion)
 }
 
 tasks.named<ProcessResources>("processResources") {

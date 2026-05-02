@@ -1,6 +1,5 @@
-﻿import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.kotlin.dsl.getByType
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
@@ -17,7 +16,6 @@ val modVersion = providers.gradleProperty("mod_version").get()
 val modId = providers.gradleProperty("mod_id").get()
 val modName = providers.gradleProperty("mod_name").get()
 val artifactVersion = providers.gradleProperty("artifact_version").get()
-val targetJavaVersion = providers.gradleProperty("target_java_version").get().toInt()
 val sourceSets = extensions.getByType<SourceSetContainer>()
 val loom = extensions.getByType<LoomGradleExtensionAPI>()
 
@@ -38,11 +36,6 @@ loom.mods {
     register(modId) {
         sourceSet(sourceSets.getByName("main"))
     }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    options.release.set(targetJavaVersion)
 }
 
 tasks.named<ProcessResources>("processResources") {
