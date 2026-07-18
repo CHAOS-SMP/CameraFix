@@ -7,6 +7,7 @@
     "MixinPacketListener",
     "MixinServerboundCustomPayloadPacket",
     "EntityCollisionAccessor",
+    "CameraAccessor",
     "MixinServerboundMovePlayerPosRotPacket",
     "MixinServerboundMovePlayerRotPacket"
   ],

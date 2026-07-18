@@ -22,7 +22,6 @@ public abstract class MixinPacketListener {
 
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
-        System.err.println("[CameraFix] MIXIN FIRED: " + packet.getClass().getSimpleName());
         if (!Main.shouldUseProtocol()) {
             return;
         }
@@ -46,7 +45,6 @@ public abstract class MixinPacketListener {
         boolean shouldRewrite = !Float.isNaN(yaw) && !Float.isNaN(pitch);
         if (packet instanceof ServerboundUseItemOnPacket e) {
             if (shouldRewrite && ProtocolPackets.SEND != null) {
-                System.err.println("[CameraFix] INTERCEPT PLACE: yaw=" + yaw + " pitch=" + pitch + " sneak=" + ProtocolPackets.SNEAK);
                 if (ProtocolPackets.SEND.send(e, null, yaw, pitch, ProtocolPackets.SNEAK)) {
                     ci.cancel();
                 }

@@ -23,11 +23,10 @@ public abstract class MixinServerboundCustomPayloadPacket {
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void camerafix$installForgePayloadCodecs(CallbackInfo ci) {
-        if (VanillaPayloads.isVanillaCodecRuntime()) {
-            StreamCodec<FriendlyByteBuf, ServerboundCustomPayloadPacket> codec = VanillaPayloads.createServerboundPacketCodec();
-            STREAM_CODEC = codec;
-            setOptionalConfigStreamCodec(codec);
-        }
+        if (!isVanillaCodecRuntime()) return;
+        StreamCodec<FriendlyByteBuf, ServerboundCustomPayloadPacket> codec = VanillaPayloads.createServerboundPacketCodec();
+        STREAM_CODEC = codec;
+        setOptionalConfigStreamCodec(codec);
     }
 
     private static void setOptionalConfigStreamCodec(StreamCodec<FriendlyByteBuf, ServerboundCustomPayloadPacket> codec) {
@@ -36,6 +35,19 @@ public abstract class MixinServerboundCustomPayloadPacket {
             field.setAccessible(true);
             field.set(null, codec);
         } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static boolean isVanillaCodecRuntime() {
+        return hasClass("net.minecraftforge.common.ForgeHooks") || hasClass("net.neoforged.neoforge.common.NeoForge");
+    }
+
+    private static boolean hasClass(String name) {
+        try {
+            Class.forName(name, false, MixinServerboundCustomPayloadPacket.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException exception) {
+            return false;
         }
     }
 }

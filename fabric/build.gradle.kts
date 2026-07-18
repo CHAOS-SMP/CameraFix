@@ -6,7 +6,7 @@ import net.fabricmc.loom.api.LoomGradleExtensionAPI
 
 plugins {
     java
-    id("fabric-loom") version "1.12-SNAPSHOT"
+    id("fabric-loom") version "1.12.7"
 }
 
 val minecraftVersion = providers.gradleProperty("minecraft_version").get()
@@ -18,6 +18,14 @@ val modName = providers.gradleProperty("mod_name").get()
 val artifactVersion = providers.gradleProperty("artifact_version").get()
 val sourceSets = extensions.getByType<SourceSetContainer>()
 val loom = extensions.getByType<LoomGradleExtensionAPI>()
+
+repositories {
+    maven("https://libraries.minecraft.net/") {
+        content {
+            includeGroup("com.mojang")
+        }
+    }
+}
 
 dependencies {
     add("minecraft", "com.mojang:minecraft:$minecraftVersion")

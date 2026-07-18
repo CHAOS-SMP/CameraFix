@@ -1,6 +1,5 @@
 package cn.chaosmp.camerafix.fabric;
 
-import cn.chaosmp.camerafix.util.PayloadIdCompat;
 import cn.chaosmp.camerafix.util.ProtocolPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -11,8 +10,8 @@ import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 
 final class FabricProtocolPackets {
-    static final CustomPacketPayload.Type<PlacePayload> PLACE_TYPE = PayloadIdCompat.createNekoType("place");
-    static final CustomPacketPayload.Type<InteractPayload> INTERACT_TYPE = PayloadIdCompat.createNekoType("interact");
+    static final CustomPacketPayload.Type<PlacePayload> PLACE_TYPE = FabricPayloadTypeCompat.createNekoType("place");
+    static final CustomPacketPayload.Type<InteractPayload> INTERACT_TYPE = FabricPayloadTypeCompat.createNekoType("interact");
 
     private FabricProtocolPackets() {
     }

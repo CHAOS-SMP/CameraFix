@@ -2,24 +2,30 @@ package cn.chaosmp.camerafix.util;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.common.custom.DiscardedPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 public final class PayloadIdCompat {
     private static final Class<?> ID_CLASS = findIdClass();
-    private static final Method CREATE_ID = findCreateId();
-    private static final Method PARSE_ID = findParseId();
+    private static final Constructor<?> TYPE_CONSTRUCTOR = findTypeConstructor();
+    private static final Method FORGE_HOOKS_CODEC = findForgeHooksCodec();
+    private static final Method FROM_NS_AND_PATH = findFromNamespaceAndPath();
+    private static final Method PARSE = findParse();
     private static final Method TYPE_ID = findTypeId();
     private static final Method DISCARDED_CODEC = findDiscardedCodec();
-    private static final Method FORGE_HOOKS_CODEC = findForgeHooksCodec();
-    private static final Constructor<?> TYPE_CONSTRUCTOR = findTypeConstructor();
 
     private PayloadIdCompat() {
     }
 
     public static Object createNekoId(String path) {
-        return invoke(CREATE_ID, null, "neko", path);
+        try {
+            return FROM_NS_AND_PATH.invoke(null, "neko", path);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Failed to create identifier", exception);
+        }
     }
 
     public static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> createNekoType(String path) {
@@ -36,7 +42,11 @@ public final class PayloadIdCompat {
     }
 
     public static Object read(FriendlyByteBuf buf) {
-        return invoke(PARSE_ID, null, buf.readUtf(Short.MAX_VALUE));
+        try {
+            return PARSE.invoke(null, buf.readUtf(Short.MAX_VALUE));
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Failed to parse identifier", exception);
+        }
     }
 
     public static void write(FriendlyByteBuf buf, Object id) {
@@ -44,17 +54,32 @@ public final class PayloadIdCompat {
     }
 
     public static Object id(CustomPacketPayload.Type<? extends CustomPacketPayload> type) {
-        return invoke(TYPE_ID, type);
+        try {
+            return TYPE_ID.invoke(type);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Failed to get id from Type", exception);
+        }
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T discardedCodec(Object id, int maxPayloadSize) {
-        return (T) invoke(DISCARDED_CODEC, null, id, maxPayloadSize);
+        try {
+            return (T) DISCARDED_CODEC.invoke(null, id, maxPayloadSize);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Failed to create discarded codec", exception);
+        }
     }
 
     @SuppressWarnings("unchecked")
     public static <T> T forgeHooksCodec(Object id, int maxPayloadSize) {
-        return FORGE_HOOKS_CODEC == null ? null : (T) invoke(FORGE_HOOKS_CODEC, null, id, maxPayloadSize);
+        if (FORGE_HOOKS_CODEC == null) {
+            return null;
+        }
+        try {
+            return (T) FORGE_HOOKS_CODEC.invoke(null, id, maxPayloadSize);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Failed to invoke ForgeHooks.getCustomPayloadCodec", exception);
+        }
     }
 
     public static boolean hasForgeHooksCodec() {
@@ -62,26 +87,23 @@ public final class PayloadIdCompat {
     }
 
     private static Class<?> findIdClass() {
-        Class<?> type = findClass(
-                "net.minecraft.resources.ResourceLocation",
-                "net.minecraft.resources.Identifier"
-        );
+        Class<?> type = findMinecraftClass("resources.ResourceLocation", "resources.Identifier");
         if (type == null) {
             throw new IllegalStateException("Minecraft identifier class is missing");
         }
         return type;
     }
 
-    private static Method findCreateId() {
-        Method method = findMethod(ID_CLASS, new Class<?>[]{String.class, String.class}, "fromNamespaceAndPath");
+    private static Method findFromNamespaceAndPath() {
+        Method method = findStaticMethod(ID_CLASS, new Class<?>[]{String.class, String.class}, "fromNamespaceAndPath");
         if (method == null) {
             throw new IllegalStateException("Identifier factory method is missing: " + ID_CLASS.getName());
         }
         return method;
     }
 
-    private static Method findParseId() {
-        Method method = findMethod(ID_CLASS, new Class<?>[]{String.class}, "parse", "tryParse");
+    private static Method findParse() {
+        Method method = findStaticMethod(ID_CLASS, new Class<?>[]{String.class}, "parse", "tryParse");
         if (method == null) {
             throw new IllegalStateException("Identifier parser method is missing: " + ID_CLASS.getName());
         }
@@ -97,8 +119,11 @@ public final class PayloadIdCompat {
     }
 
     private static Method findDiscardedCodec() {
-        Class<?> discardedPayload = findClass("net.minecraft.network.protocol.common.custom.DiscardedPayload");
-        Method method = findMethod(discardedPayload, new Class<?>[]{ID_CLASS, int.class}, "codec");
+        Class<?> discardedPayload = findMinecraftClass("network.protocol.common.custom.DiscardedPayload");
+        if (discardedPayload == null) {
+            throw new IllegalStateException("DiscardedPayload class is missing");
+        }
+        Method method = findStaticMethod(discardedPayload, new Class<?>[]{ID_CLASS, int.class}, "codec");
         if (method == null) {
             throw new IllegalStateException("DiscardedPayload codec factory is missing");
         }
@@ -110,7 +135,7 @@ public final class PayloadIdCompat {
         if (type == null) {
             return null;
         }
-        return findMethod(type, new Class<?>[]{ID_CLASS, int.class}, "getCustomPayloadCodec");
+        return findStaticMethod(type, new Class<?>[]{ID_CLASS, int.class}, "getCustomPayloadCodec");
     }
 
     private static Constructor<?> findTypeConstructor() {
@@ -123,29 +148,45 @@ public final class PayloadIdCompat {
         }
     }
 
-    private static Object invoke(Method method, Object owner, Object... args) {
+    private static Class<?> findMinecraftClass(String... paths) {
+        ClassLoader loader = PayloadIdCompat.class.getClassLoader();
+        for (String path : paths) {
+            // Use string concat to bypass Loom remapping
+            Class<?> type = findClass("net.minecraft." + path);
+            if (type != null) return type;
+        }
+        return null;
+    }
+
+    private static Class<?> findClass(String name) {
         try {
-            return method.invoke(owner, args);
-        } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Failed to invoke " + method, exception);
+            return Class.forName(name, false, PayloadIdCompat.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            return null;
         }
     }
 
-    private static Class<?> findClass(String... names) {
-        ClassLoader loader = PayloadIdCompat.class.getClassLoader();
+    private static Method findStaticMethod(Class<?> type, Class<?>[] parameterTypes, String... names) {
+        if (type == null) return null;
         for (String name : names) {
             try {
-                return Class.forName(name, false, loader);
-            } catch (ClassNotFoundException ignored) {
+                Method method = type.getDeclaredMethod(name, parameterTypes);
+                method.setAccessible(true);
+                if (java.lang.reflect.Modifier.isStatic(method.getModifiers())) return method;
+            } catch (NoSuchMethodException ignored) {
+            }
+            try {
+                Method method = type.getMethod(name, parameterTypes);
+                method.setAccessible(true);
+                if (java.lang.reflect.Modifier.isStatic(method.getModifiers())) return method;
+            } catch (NoSuchMethodException ignored) {
             }
         }
         return null;
     }
 
     private static Method findMethod(Class<?> type, Class<?>[] parameterTypes, String... names) {
-        if (type == null) {
-            return null;
-        }
+        if (type == null) return null;
         for (String name : names) {
             try {
                 Method method = type.getDeclaredMethod(name, parameterTypes);
