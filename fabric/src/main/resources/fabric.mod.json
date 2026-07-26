@@ -12,9 +12,9 @@
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "main": ["cn.chaosmp.camerafix.fabric.FabricMain"]
+    "main": ["cn.chaosmp.camerafix.fabric.FabricBootstrap"],
+    "preLaunch": ["cn.chaosmp.camerafix.fabric.FabricPreLaunch"]
   },
-  "mixins": ["camerafix.mixins.json"],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "minecraft": ">=${minecraft_version}",

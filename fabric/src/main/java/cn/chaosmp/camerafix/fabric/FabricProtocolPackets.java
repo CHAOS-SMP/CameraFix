@@ -24,10 +24,10 @@ final class FabricProtocolPackets {
     static void initSender() {
         ProtocolPackets.initSender((useItemOn, useItem, yaw, pitch, sneak) -> {
             if (useItemOn != null) {
-                ClientPlayNetworking.send(new PlacePayload(useItemOn, yaw, pitch, sneak));
+                ClientPlayNetworking.send(new PlacePayload((ServerboundUseItemOnPacket) useItemOn, yaw, pitch, sneak));
                 return true;
             } else if (useItem != null) {
-                ClientPlayNetworking.send(new InteractPayload(useItem, yaw, pitch, sneak));
+                ClientPlayNetworking.send(new InteractPayload((ServerboundUseItemPacket) useItem, yaw, pitch, sneak));
                 return true;
             }
             return false;
